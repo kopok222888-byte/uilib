@@ -1,5 +1,6 @@
--- Enhanced UI Library v2.2
--- Исправления: colorpicker (один экземпляр + улучшенный дизайн), GUI поверх паузы, стабильные ZIndex
+-- ============================================================
+-- UI Library v2.2 (встроенная)
+-- ============================================================
 local Library = {}
 Library.Windows = {}
 Library.Notifications = {}
@@ -76,7 +77,7 @@ function Library:CreateWindow(title)
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = title
     ScreenGui.ResetOnSpawn = false
-    ScreenGui.DisplayOrder = 1000          -- поверх всех стандартных GUI (в т.ч. меню паузы)
+    ScreenGui.DisplayOrder = 1000
     ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
     local MainFrame = Instance.new("Frame")
@@ -188,9 +189,7 @@ function Library:CreateWindow(title)
     -- Блокируем закрытие по Escape (оставляем только Insert)
     UserInputService.InputBegan:Connect(function(input, gameProcessed)
         if input.KeyCode == Enum.KeyCode.Escape and MainFrame.Visible then
-            -- Не даём игре закрыть GUI или поставить на паузу
-            -- Можно раскомментировать, если нужно отключить стандартное поведение
-            -- gameProcessed = true
+            -- Ничего не делаем, не даём скрыться меню
         end
     end)
 
@@ -631,7 +630,7 @@ function Library:CreateWindow(title)
             makeCorner(ColorDisplay, 4)
             ColorDisplay.Parent = Frame
 
-            local activePicker = nil   -- единственный экземпляр пикера
+            local activePicker = nil
 
             local function closePicker()
                 if activePicker then
@@ -642,7 +641,6 @@ function Library:CreateWindow(title)
 
             ColorDisplay.InputBegan:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                    -- Закрыть предыдущий, если есть
                     closePicker()
 
                     activePicker = Instance.new("Frame")
@@ -654,7 +652,6 @@ function Library:CreateWindow(title)
                     activePicker.Parent = ScreenGui
                     makeCorner(activePicker, 10)
 
-                    -- Заголовок
                     local pickerTitle = Instance.new("TextLabel")
                     pickerTitle.Size = UDim2.new(1, -20, 0, 25)
                     pickerTitle.Position = UDim2.new(0, 10, 0, 5)
@@ -665,7 +662,6 @@ function Library:CreateWindow(title)
                     pickerTitle.TextSize = 14
                     pickerTitle.Parent = activePicker
 
-                    -- Предпросмотр цвета
                     local preview = Instance.new("Frame")
                     preview.Size = UDim2.new(0, 200, 0, 30)
                     preview.Position = UDim2.new(0.5, -100, 0, 35)
@@ -674,8 +670,7 @@ function Library:CreateWindow(title)
                     makeCorner(preview, 6)
                     preview.Parent = activePicker
 
-                    -- Три слайдера RGB
-                    local function makeColorSlider(channel, yPos, minVal, maxVal, startVal, baseColor)
+                    local function makeColorSlider(channel, yPos, minVal, maxVal, startVal)
                         local sliderFrame = Instance.new("Frame")
                         sliderFrame.Size = UDim2.new(0, 200, 0, 25)
                         sliderFrame.Position = UDim2.new(0, 10, 0, yPos)
@@ -725,7 +720,6 @@ function Library:CreateWindow(title)
                                 val = math.floor(val + 0.5)
                                 fill.Size = UDim2.new(pct, 0, 1, 0)
                                 thumb.Position = UDim2.new(pct, -6, 0.5, -6)
-                                -- Обновить соответствующий канал
                                 if channel == "R" then
                                     elem.Value = Color3.fromRGB(val, elem.Value.G * 255, elem.Value.B * 255)
                                 elseif channel == "G" then
@@ -742,11 +736,10 @@ function Library:CreateWindow(title)
                         return {bg = bg, fill = fill, thumb = thumb}
                     end
 
-                    local rSlider = makeColorSlider("R", 75, 0, 255, default.R * 255)
-                    local gSlider = makeColorSlider("G", 110, 0, 255, default.G * 255)
-                    local bSlider = makeColorSlider("B", 145, 0, 255, default.B * 255)
+                    makeColorSlider("R", 75, 0, 255, default.R * 255)
+                    makeColorSlider("G", 110, 0, 255, default.G * 255)
+                    makeColorSlider("B", 145, 0, 255, default.B * 255)
 
-                    -- Кнопка закрытия
                     local closeBtn = Instance.new("TextButton")
                     closeBtn.Size = UDim2.new(0, 80, 0, 25)
                     closeBtn.Position = UDim2.new(0.5, -40, 0, 185)
@@ -760,7 +753,6 @@ function Library:CreateWindow(title)
                     closeBtn.Parent = activePicker
                     closeBtn.MouseButton1Click:Connect(closePicker)
 
-                    -- Закрытие по клику вне пикера
                     local connection
                     connection = UserInputService.InputBegan:Connect(function(input2)
                         if input2.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -773,7 +765,6 @@ function Library:CreateWindow(title)
                         end
                     end)
 
-                    -- При уничтожении пикера отключаем соединение
                     activePicker.Destroying:Connect(function()
                         if connection then connection:Disconnect() end
                     end)
@@ -794,3 +785,6 @@ function Library:CreateWindow(title)
 end
 
 return Library
+-- ============================================================
+-- Конец встроенной библиотеки
+-- ============================================================
