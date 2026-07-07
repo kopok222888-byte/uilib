@@ -1,4 +1,5 @@
--- Enhanced UI Library v2.1 - Fixed Dropdown & Slider overlap
+-- Enhanced UI Library v2.2
+-- Исправления: colorpicker (один экземпляр + улучшенный дизайн), GUI поверх паузы, стабильные ZIndex
 local Library = {}
 Library.Windows = {}
 Library.Notifications = {}
@@ -26,7 +27,6 @@ local function makeCorner(frame, radius)
 end
 
 function Library:CreateNotification(text, duration)
-    -- (без изменений, код уведомлений тот же)
     local notification = Instance.new("Frame")
     notification.Size = UDim2.new(0, 250, 0, 50)
     notification.Position = UDim2.new(1, -260, 0, 20 + (#Library.Notifications * 60))
@@ -76,6 +76,7 @@ function Library:CreateWindow(title)
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = title
     ScreenGui.ResetOnSpawn = false
+    ScreenGui.DisplayOrder = 1000          -- поверх всех стандартных GUI (в т.ч. меню паузы)
     ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
     local MainFrame = Instance.new("Frame")
@@ -85,6 +86,7 @@ function Library:CreateWindow(title)
     MainFrame.BorderSizePixel = 0
     MainFrame.Active = true
     MainFrame.Draggable = true
+    MainFrame.ZIndex = 2
     MainFrame.Parent = ScreenGui
     makeCorner(MainFrame, 8)
 
@@ -183,6 +185,15 @@ function Library:CreateWindow(title)
         end
     end)
 
+    -- Блокируем закрытие по Escape (оставляем только Insert)
+    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if input.KeyCode == Enum.KeyCode.Escape and MainFrame.Visible then
+            -- Не даём игре закрыть GUI или поставить на паузу
+            -- Можно раскомментировать, если нужно отключить стандартное поведение
+            -- gameProcessed = true
+        end
+    end)
+
     function Window:CreateTab(name)
         local Tab = {}
         Tab.Name = name
@@ -234,6 +245,7 @@ function Library:CreateWindow(title)
             Frame.Parent = ContentFrame
             Frame.Visible = Tab.Visible
             Frame.AutoButtonColor = false
+            Frame.ZIndex = 5
             makeCorner(Frame, 4)
 
             Frame.MouseButton1Down:Connect(function()
@@ -260,6 +272,7 @@ function Library:CreateWindow(title)
             Frame.BorderSizePixel = 0
             Frame.Parent = ContentFrame
             Frame.Visible = Tab.Visible
+            Frame.ZIndex = 5
             makeCorner(Frame, 4)
 
             local Label = Instance.new("TextLabel")
@@ -311,7 +324,6 @@ function Library:CreateWindow(title)
             return elem
         end
 
-        -- Исправленный слайдер: поднимаем ZIndex, чтобы ползунок не прятался
         function Tab:AddSlider(text, min, max, default, callback)
             local elem = {Type = "Slider", Text = text, Value = default}
             local Frame = Instance.new("Frame")
@@ -321,6 +333,7 @@ function Library:CreateWindow(title)
             Frame.BorderSizePixel = 0
             Frame.Parent = ContentFrame
             Frame.Visible = Tab.Visible
+            Frame.ZIndex = 5
             makeCorner(Frame, 4)
 
             local Label = Instance.new("TextLabel")
@@ -339,7 +352,7 @@ function Library:CreateWindow(title)
             SliderBar.Position = UDim2.new(0, 10, 0, 35)
             SliderBar.BackgroundColor3 = Colors.Disabled
             SliderBar.BorderSizePixel = 0
-            SliderBar.ZIndex = 5   -- повышаем слой
+            SliderBar.ZIndex = 6
             SliderBar.Parent = Frame
 
             local Fill = Instance.new("Frame")
@@ -347,7 +360,7 @@ function Library:CreateWindow(title)
             Fill.Size = UDim2.new(percent, 0, 1, 0)
             Fill.BackgroundColor3 = Colors.Accent
             Fill.BorderSizePixel = 0
-            Fill.ZIndex = 5
+            Fill.ZIndex = 6
             Fill.Parent = SliderBar
 
             local Thumb = Instance.new("TextButton")
@@ -357,7 +370,7 @@ function Library:CreateWindow(title)
             Thumb.Text = ""
             Thumb.BorderSizePixel = 0
             Thumb.AutoButtonColor = false
-            Thumb.ZIndex = 10  -- самый верх
+            Thumb.ZIndex = 10
             makeCorner(Thumb, 6)
             Thumb.Parent = SliderBar
 
@@ -392,7 +405,6 @@ function Library:CreateWindow(title)
             return elem
         end
 
-        -- Исправленный дропдаун: список теперь всегда поверх
         function Tab:AddDropdown(text, options, callback)
             local elem = {Type = "Dropdown", Value = options[1]}
             local Frame = Instance.new("Frame")
@@ -402,6 +414,7 @@ function Library:CreateWindow(title)
             Frame.BorderSizePixel = 0
             Frame.Parent = ContentFrame
             Frame.Visible = Tab.Visible
+            Frame.ZIndex = 5
             makeCorner(Frame, 4)
 
             local Label = Instance.new("TextLabel")
@@ -434,7 +447,7 @@ function Library:CreateWindow(title)
             DropList.BorderSizePixel = 0
             DropList.Visible = false
             DropList.ClipsDescendants = true
-            DropList.ZIndex = 10            -- ПОВЕРХ ВСЕГО
+            DropList.ZIndex = 15
             DropList.Parent = Frame
             makeCorner(DropList, 4)
 
@@ -462,7 +475,7 @@ function Library:CreateWindow(title)
                 OptionBtn.Font = Enum.Font.Gotham
                 OptionBtn.TextSize = 14
                 OptionBtn.AutoButtonColor = false
-                OptionBtn.ZIndex = 10
+                OptionBtn.ZIndex = 15
                 OptionBtn.Parent = DropList
                 OptionBtn.MouseButton1Click:Connect(function()
                     elem.Value = option
@@ -489,6 +502,7 @@ function Library:CreateWindow(title)
             Frame.BorderSizePixel = 0
             Frame.Parent = ContentFrame
             Frame.Visible = Tab.Visible
+            Frame.ZIndex = 5
             makeCorner(Frame, 4)
 
             local Label = Instance.new("TextLabel")
@@ -549,6 +563,7 @@ function Library:CreateWindow(title)
             Frame.BorderSizePixel = 0
             Frame.Parent = ContentFrame
             Frame.Visible = Tab.Visible
+            Frame.ZIndex = 5
             makeCorner(Frame, 4)
 
             local Label = Instance.new("TextLabel")
@@ -594,6 +609,7 @@ function Library:CreateWindow(title)
             Frame.BorderSizePixel = 0
             Frame.Parent = ContentFrame
             Frame.Visible = Tab.Visible
+            Frame.ZIndex = 5
             makeCorner(Frame, 4)
 
             local Label = Instance.new("TextLabel")
@@ -615,57 +631,152 @@ function Library:CreateWindow(title)
             makeCorner(ColorDisplay, 4)
             ColorDisplay.Parent = Frame
 
+            local activePicker = nil   -- единственный экземпляр пикера
+
+            local function closePicker()
+                if activePicker then
+                    activePicker:Destroy()
+                    activePicker = nil
+                end
+            end
+
             ColorDisplay.InputBegan:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                    local pickerFrame = Instance.new("Frame")
-                    pickerFrame.Size = UDim2.new(0, 200, 0, 200)
-                    pickerFrame.Position = UDim2.new(0, ColorDisplay.AbsolutePosition.X - 100, 0, ColorDisplay.AbsolutePosition.Y + 30)
-                    pickerFrame.BackgroundColor3 = Colors.Background
-                    pickerFrame.BorderSizePixel = 0
-                    pickerFrame.Parent = ScreenGui
-                    makeCorner(pickerFrame, 8)
+                    -- Закрыть предыдущий, если есть
+                    closePicker()
 
-                    local function closePicker()
-                        pickerFrame:Destroy()
+                    activePicker = Instance.new("Frame")
+                    activePicker.Size = UDim2.new(0, 220, 0, 220)
+                    activePicker.Position = UDim2.new(0, ColorDisplay.AbsolutePosition.X - 90, 0, ColorDisplay.AbsolutePosition.Y + 30)
+                    activePicker.BackgroundColor3 = Colors.Background
+                    activePicker.BorderSizePixel = 0
+                    activePicker.ZIndex = 20
+                    activePicker.Parent = ScreenGui
+                    makeCorner(activePicker, 10)
+
+                    -- Заголовок
+                    local pickerTitle = Instance.new("TextLabel")
+                    pickerTitle.Size = UDim2.new(1, -20, 0, 25)
+                    pickerTitle.Position = UDim2.new(0, 10, 0, 5)
+                    pickerTitle.BackgroundTransparency = 1
+                    pickerTitle.TextColor3 = Colors.Text
+                    pickerTitle.Text = "Выбор цвета"
+                    pickerTitle.Font = Enum.Font.GothamBold
+                    pickerTitle.TextSize = 14
+                    pickerTitle.Parent = activePicker
+
+                    -- Предпросмотр цвета
+                    local preview = Instance.new("Frame")
+                    preview.Size = UDim2.new(0, 200, 0, 30)
+                    preview.Position = UDim2.new(0.5, -100, 0, 35)
+                    preview.BackgroundColor3 = elem.Value
+                    preview.BorderSizePixel = 0
+                    makeCorner(preview, 6)
+                    preview.Parent = activePicker
+
+                    -- Три слайдера RGB
+                    local function makeColorSlider(channel, yPos, minVal, maxVal, startVal, baseColor)
+                        local sliderFrame = Instance.new("Frame")
+                        sliderFrame.Size = UDim2.new(0, 200, 0, 25)
+                        sliderFrame.Position = UDim2.new(0, 10, 0, yPos)
+                        sliderFrame.BackgroundColor3 = Colors.Element
+                        sliderFrame.BorderSizePixel = 0
+                        sliderFrame.Parent = activePicker
+                        makeCorner(sliderFrame, 4)
+
+                        local bg = Instance.new("Frame")
+                        bg.Size = UDim2.new(1, -10, 0, 6)
+                        bg.Position = UDim2.new(0, 5, 0.5, -3)
+                        bg.BackgroundColor3 = Colors.Disabled
+                        bg.BorderSizePixel = 0
+                        bg.Parent = sliderFrame
+
+                        local fill = Instance.new("Frame")
+                        local percent = (startVal - minVal) / (maxVal - minVal)
+                        fill.Size = UDim2.new(percent, 0, 1, 0)
+                        fill.BackgroundColor3 = Colors.Accent
+                        fill.BorderSizePixel = 0
+                        fill.Parent = bg
+
+                        local thumb = Instance.new("TextButton")
+                        thumb.Size = UDim2.new(0, 12, 0, 12)
+                        thumb.Position = UDim2.new(percent, -6, 0.5, -6)
+                        thumb.BackgroundColor3 = Colors.Text
+                        thumb.Text = ""
+                        thumb.BorderSizePixel = 0
+                        thumb.AutoButtonColor = false
+                        thumb.ZIndex = 10
+                        makeCorner(thumb, 6)
+                        thumb.Parent = bg
+
+                        local dragging = false
+                        thumb.MouseButton1Down:Connect(function() dragging = true end)
+                        UserInputService.InputEnded:Connect(function(input)
+                            if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+                        end)
+                        RunService.RenderStepped:Connect(function()
+                            if dragging then
+                                local mousePos = UserInputService:GetMouseLocation()
+                                local barStart = bg.AbsolutePosition.X
+                                local barWidth = bg.AbsoluteSize.X
+                                local relX = math.clamp(mousePos.X - barStart, 0, barWidth)
+                                local pct = relX / barWidth
+                                local val = minVal + (maxVal - minVal) * pct
+                                val = math.floor(val + 0.5)
+                                fill.Size = UDim2.new(pct, 0, 1, 0)
+                                thumb.Position = UDim2.new(pct, -6, 0.5, -6)
+                                -- Обновить соответствующий канал
+                                if channel == "R" then
+                                    elem.Value = Color3.fromRGB(val, elem.Value.G * 255, elem.Value.B * 255)
+                                elseif channel == "G" then
+                                    elem.Value = Color3.fromRGB(elem.Value.R * 255, val, elem.Value.B * 255)
+                                elseif channel == "B" then
+                                    elem.Value = Color3.fromRGB(elem.Value.R * 255, elem.Value.G * 255, val)
+                                end
+                                ColorDisplay.BackgroundColor3 = elem.Value
+                                preview.BackgroundColor3 = elem.Value
+                                if callback then callback(elem.Value) end
+                            end
+                        end)
+
+                        return {bg = bg, fill = fill, thumb = thumb}
                     end
 
-                    local rSlider = Tab:AddSlider("R", 0, 255, default.R * 255, function(val)
-                        elem.Value = Color3.fromRGB(val, elem.Value.G * 255, elem.Value.B * 255)
-                        ColorDisplay.BackgroundColor3 = elem.Value
-                        if callback then callback(elem.Value) end
-                    end)
-                    rSlider.Frame.Parent = pickerFrame
-                    rSlider.Frame.Size = UDim2.new(1, -20, 0, 40)
-                    rSlider.Frame.Position = UDim2.new(0, 10, 0, 10)
+                    local rSlider = makeColorSlider("R", 75, 0, 255, default.R * 255)
+                    local gSlider = makeColorSlider("G", 110, 0, 255, default.G * 255)
+                    local bSlider = makeColorSlider("B", 145, 0, 255, default.B * 255)
 
-                    local gSlider = Tab:AddSlider("G", 0, 255, default.G * 255, function(val)
-                        elem.Value = Color3.fromRGB(elem.Value.R * 255, val, elem.Value.B * 255)
-                        ColorDisplay.BackgroundColor3 = elem.Value
-                        if callback then callback(elem.Value) end
-                    end)
-                    gSlider.Frame.Parent = pickerFrame
-                    gSlider.Frame.Size = UDim2.new(1, -20, 0, 40)
-                    gSlider.Frame.Position = UDim2.new(0, 10, 0, 60)
-
-                    local bSlider = Tab:AddSlider("B", 0, 255, default.B * 255, function(val)
-                        elem.Value = Color3.fromRGB(elem.Value.R * 255, elem.Value.G * 255, val)
-                        ColorDisplay.BackgroundColor3 = elem.Value
-                        if callback then callback(elem.Value) end
-                    end)
-                    bSlider.Frame.Parent = pickerFrame
-                    bSlider.Frame.Size = UDim2.new(1, -20, 0, 40)
-                    bSlider.Frame.Position = UDim2.new(0, 10, 0, 110)
-
+                    -- Кнопка закрытия
                     local closeBtn = Instance.new("TextButton")
-                    closeBtn.Size = UDim2.new(1, -20, 0, 30)
-                    closeBtn.Position = UDim2.new(0, 10, 0, 160)
+                    closeBtn.Size = UDim2.new(0, 80, 0, 25)
+                    closeBtn.Position = UDim2.new(0.5, -40, 0, 185)
                     closeBtn.BackgroundColor3 = Colors.Accent
                     closeBtn.TextColor3 = Colors.Text
                     closeBtn.Text = "Закрыть"
                     closeBtn.Font = Enum.Font.Gotham
                     closeBtn.TextSize = 14
-                    closeBtn.Parent = pickerFrame
+                    closeBtn.BorderSizePixel = 0
+                    makeCorner(closeBtn, 4)
+                    closeBtn.Parent = activePicker
                     closeBtn.MouseButton1Click:Connect(closePicker)
+
+                    -- Закрытие по клику вне пикера
+                    local connection
+                    connection = UserInputService.InputBegan:Connect(function(input2)
+                        if input2.UserInputType == Enum.UserInputType.MouseButton1 then
+                            local pos = UserInputService:GetMouseLocation()
+                            if activePicker and (pos.X < activePicker.AbsolutePosition.X or pos.X > activePicker.AbsolutePosition.X + activePicker.AbsoluteSize.X
+                                or pos.Y < activePicker.AbsolutePosition.Y or pos.Y > activePicker.AbsolutePosition.Y + activePicker.AbsoluteSize.Y) then
+                                closePicker()
+                                connection:Disconnect()
+                            end
+                        end
+                    end)
+
+                    -- При уничтожении пикера отключаем соединение
+                    activePicker.Destroying:Connect(function()
+                        if connection then connection:Disconnect() end
+                    end)
                 end
             end)
 
