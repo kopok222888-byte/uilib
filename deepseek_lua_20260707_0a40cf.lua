@@ -1,5 +1,5 @@
 -- ============================================================
--- UI Library v2.2 (встроенная)
+-- UI Library v2.2 + пример окна
 -- ============================================================
 local Library = {}
 Library.Windows = {}
@@ -784,7 +784,22 @@ function Library:CreateWindow(title)
     return Window
 end
 
-return Library
 -- ============================================================
--- Конец встроенной библиотеки
+-- СОЗДАНИЕ GUI (ВЫЗОВ)
 -- ============================================================
+local Window = Library:CreateWindow("Gothbreach Cheat")
+
+local MainTab = Window:CreateTab("Main")
+MainTab:AddButton("Тестовая кнопка", function()
+    Library:CreateNotification("Кнопка нажата!", 2)
+end)
+
+MainTab:AddToggle("Включить Aimbot", false, function(state)
+    Library:CreateNotification("Aimbot: " .. tostring(state), 2)
+end)
+
+MainTab:AddSlider("FOV", 50, 150, 90, function(val)
+    print("FOV: " .. val)
+end)
+
+Library:CreateNotification("UI загружен!", 3)
