@@ -1,6 +1,4 @@
--- ============================================================
--- UI Library v2.2 + пример окна
--- ============================================================
+-- UI Library v3.0 (исправленная, для загрузки через loadstring)
 local Library = {}
 Library.Windows = {}
 Library.Notifications = {}
@@ -11,6 +9,7 @@ local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
 
+-- Цветовая схема
 local Colors = {
     Background = Color3.fromRGB(18, 18, 18),
     Element = Color3.fromRGB(28, 28, 28),
@@ -21,12 +20,14 @@ local Colors = {
     ButtonHover = Color3.fromRGB(45, 45, 45)
 }
 
+-- Скругление углов
 local function makeCorner(frame, radius)
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, radius)
     corner.Parent = frame
 end
 
+-- Уведомления
 function Library:CreateNotification(text, duration)
     local notification = Instance.new("Frame")
     notification.Size = UDim2.new(0, 250, 0, 50)
@@ -67,6 +68,7 @@ function Library:CreateNotification(text, duration)
     end)
 end
 
+-- Создание окна
 function Library:CreateWindow(title)
     local Window = {}
     Window.Title = title
@@ -74,10 +76,11 @@ function Library:CreateWindow(title)
     Window.CurrentTab = nil
     Window.Minimized = false
 
+    -- ScreenGui с ResetOnSpawn = false (не пропадает при смерти)
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = title
     ScreenGui.ResetOnSpawn = false
-    ScreenGui.DisplayOrder = 1000
+    ScreenGui.DisplayOrder = 1000   -- поверх игрового меню
     ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
     local MainFrame = Instance.new("Frame")
@@ -91,6 +94,7 @@ function Library:CreateWindow(title)
     MainFrame.Parent = ScreenGui
     makeCorner(MainFrame, 8)
 
+    -- Заголовок
     local TitleBar = Instance.new("Frame")
     TitleBar.Size = UDim2.new(1, 0, 0, 32)
     TitleBar.BackgroundColor3 = Colors.Element
@@ -108,6 +112,7 @@ function Library:CreateWindow(title)
     TitleText.TextSize = 14
     TitleText.Parent = TitleBar
 
+    -- Кнопка сворачивания
     local MinimizeBtn = Instance.new("TextButton")
     MinimizeBtn.Size = UDim2.new(0, 20, 0, 20)
     MinimizeBtn.Position = UDim2.new(1, -54, 0.5, -10)
@@ -123,6 +128,7 @@ function Library:CreateWindow(title)
     MinimizeBtn.MouseButton1Click:Connect(function()
         MainFrame.Visible = false
         Window.Minimized = true
+        -- Показать кнопку восстановления
         local RestoreBtn = ScreenGui:FindFirstChild("RestoreBtn")
         if not RestoreBtn then
             RestoreBtn = Instance.new("TextButton")
@@ -145,6 +151,7 @@ function Library:CreateWindow(title)
         end
     end)
 
+    -- Кнопка закрытия
     local CloseBtn = Instance.new("TextButton")
     CloseBtn.Size = UDim2.new(0, 20, 0, 20)
     CloseBtn.Position = UDim2.new(1, -24, 0.5, -10)
@@ -161,6 +168,7 @@ function Library:CreateWindow(title)
         ScreenGui:Destroy()
     end)
 
+    -- Контейнер вкладок
     local TabContainer = Instance.new("Frame")
     TabContainer.Size = UDim2.new(0, 130, 1, -32)
     TabContainer.Position = UDim2.new(0, 0, 0, 32)
@@ -169,6 +177,7 @@ function Library:CreateWindow(title)
     TabContainer.Parent = MainFrame
     makeCorner(TabContainer, 8)
 
+    -- Область контента
     local ContentFrame = Instance.new("Frame")
     ContentFrame.Size = UDim2.new(1, -130, 1, -32)
     ContentFrame.Position = UDim2.new(0, 130, 0, 32)
@@ -180,19 +189,14 @@ function Library:CreateWindow(title)
     TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
     TabListLayout.Parent = TabContainer
 
+    -- Открытие/закрытие по Insert
     UserInputService.InputBegan:Connect(function(input, gameProcessed)
         if input.KeyCode == Enum.KeyCode.Insert and not gameProcessed then
             MainFrame.Visible = not MainFrame.Visible
         end
     end)
 
-    -- Блокируем закрытие по Escape (оставляем только Insert)
-    UserInputService.InputBegan:Connect(function(input, gameProcessed)
-        if input.KeyCode == Enum.KeyCode.Escape and MainFrame.Visible then
-            -- Ничего не делаем, не даём скрыться меню
-        end
-    end)
-
+    -- Создание вкладки
     function Window:CreateTab(name)
         local Tab = {}
         Tab.Name = name
@@ -231,6 +235,7 @@ function Library:CreateWindow(title)
             end
         end)
 
+        -- Кнопка
         function Tab:AddButton(text, callback)
             local elem = {Type = "Button", Text = text}
             local Frame = Instance.new("TextButton")
@@ -247,6 +252,7 @@ function Library:CreateWindow(title)
             Frame.ZIndex = 5
             makeCorner(Frame, 4)
 
+            -- Анимация нажатия
             Frame.MouseButton1Down:Connect(function()
                 TweenService:Create(Frame, TweenInfo.new(0.1), {BackgroundColor3 = Colors.ButtonHover}):Play()
                 TweenService:Create(Frame, TweenInfo.new(0.05), {Size = UDim2.new(1, -16, 0, 28)}):Play()
@@ -262,6 +268,7 @@ function Library:CreateWindow(title)
             return elem
         end
 
+        -- Тоггл
         function Tab:AddToggle(text, default, callback)
             local elem = {Type = "Toggle", Text = text, Value = default}
             local Frame = Instance.new("Frame")
@@ -323,6 +330,7 @@ function Library:CreateWindow(title)
             return elem
         end
 
+        -- Слайдер (исправлен)
         function Tab:AddSlider(text, min, max, default, callback)
             local elem = {Type = "Slider", Text = text, Value = default}
             local Frame = Instance.new("Frame")
@@ -404,6 +412,7 @@ function Library:CreateWindow(title)
             return elem
         end
 
+        -- Выпадающий список (исправлен, всегда поверх)
         function Tab:AddDropdown(text, options, callback)
             local elem = {Type = "Dropdown", Value = options[1]}
             local Frame = Instance.new("Frame")
@@ -446,7 +455,7 @@ function Library:CreateWindow(title)
             DropList.BorderSizePixel = 0
             DropList.Visible = false
             DropList.ClipsDescendants = true
-            DropList.ZIndex = 15
+            DropList.ZIndex = 15   -- САМЫЙ ВЫСОКИЙ СЛОЙ
             DropList.Parent = Frame
             makeCorner(DropList, 4)
 
@@ -492,6 +501,7 @@ function Library:CreateWindow(title)
             return elem
         end
 
+        -- Бинд клавиши
         function Tab:AddKeybind(text, defaultKey, callback)
             local elem = {Type = "Keybind", Text = text, Value = defaultKey}
             local Frame = Instance.new("Frame")
@@ -553,6 +563,7 @@ function Library:CreateWindow(title)
             return elem
         end
 
+        -- Текстовое поле
         function Tab:AddTextbox(text, default, callback)
             local elem = {Type = "Textbox", Value = default}
             local Frame = Instance.new("Frame")
@@ -599,6 +610,7 @@ function Library:CreateWindow(title)
             return elem
         end
 
+        -- Цветовой пикер (один экземпляр, улучшенный)
         function Tab:AddColorpicker(text, default, callback)
             local elem = {Type = "Colorpicker", Value = default}
             local Frame = Instance.new("Frame")
@@ -784,22 +796,4 @@ function Library:CreateWindow(title)
     return Window
 end
 
--- ============================================================
--- СОЗДАНИЕ GUI (ВЫЗОВ)
--- ============================================================
-local Window = Library:CreateWindow("Gothbreach Cheat")
-
-local MainTab = Window:CreateTab("Main")
-MainTab:AddButton("Тестовая кнопка", function()
-    Library:CreateNotification("Кнопка нажата!", 2)
-end)
-
-MainTab:AddToggle("Включить Aimbot", false, function(state)
-    Library:CreateNotification("Aimbot: " .. tostring(state), 2)
-end)
-
-MainTab:AddSlider("FOV", 50, 150, 90, function(val)
-    print("FOV: " .. val)
-end)
-
-Library:CreateNotification("UI загружен!", 3)
+return Library
