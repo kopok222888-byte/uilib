@@ -1,18 +1,14 @@
--- Enhanced UI Library v2.0
--- Улучшения: дизайн, ResetOnSpawn, кнопки свернуть/закрыть, фикс ползунков, анимация кликов
-
+-- Enhanced UI Library v2.1 - Fixed Dropdown & Slider overlap
 local Library = {}
 Library.Windows = {}
 Library.Notifications = {}
 
--- Сервисы
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
 
--- Цветовая схема
 local Colors = {
     Background = Color3.fromRGB(18, 18, 18),
     Element = Color3.fromRGB(28, 28, 28),
@@ -20,23 +16,8 @@ local Colors = {
     Text = Color3.fromRGB(240, 240, 240),
     Toggled = Color3.fromRGB(0, 230, 100),
     Disabled = Color3.fromRGB(120, 120, 120),
-    ButtonHover = Color3.fromRGB(45, 45, 45),
-    Shadow = Color3.fromRGB(0, 0, 0)
+    ButtonHover = Color3.fromRGB(45, 45, 45)
 }
-
--- Тени и скругления
-local function applyShadow(frame)
-    local shadow = Instance.new("ImageLabel")
-    shadow.Size = UDim2.new(1, 20, 1, 20)
-    shadow.Position = UDim2.new(0, -10, 0, -10)
-    shadow.BackgroundTransparency = 1
-    shadow.Image = "rbxassetid://6014261993" -- стандартная тень
-    shadow.ImageTransparency = 0.7
-    shadow.ScaleType = Enum.ScaleType.Slice
-    shadow.SliceCenter = Rect.new(49, 49, 49, 49)
-    shadow.Parent = frame
-    shadow.ZIndex = 0
-end
 
 local function makeCorner(frame, radius)
     local corner = Instance.new("UICorner")
@@ -44,16 +25,15 @@ local function makeCorner(frame, radius)
     corner.Parent = frame
 end
 
--- Функция создания уведомления (остаётся прежней)
 function Library:CreateNotification(text, duration)
+    -- (без изменений, код уведомлений тот же)
     local notification = Instance.new("Frame")
     notification.Size = UDim2.new(0, 250, 0, 50)
     notification.Position = UDim2.new(1, -260, 0, 20 + (#Library.Notifications * 60))
     notification.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     notification.BorderSizePixel = 0
-    notification.Parent = LocalPlayer.PlayerGui
+    notification.Parent = LocalPlayer:WaitForChild("PlayerGui")
     makeCorner(notification, 6)
-    applyShadow(notification)
 
     local textLabel = Instance.new("TextLabel")
     textLabel.Size = UDim2.new(1, -10, 1, 0)
@@ -86,7 +66,6 @@ function Library:CreateNotification(text, duration)
     end)
 end
 
--- Создание окна
 function Library:CreateWindow(title)
     local Window = {}
     Window.Title = title
@@ -94,15 +73,12 @@ function Library:CreateWindow(title)
     Window.CurrentTab = nil
     Window.Minimized = false
 
-    -- Используем PlayerGui, но с ResetOnSpawn = false, чтобы GUI не исчезал при смерти
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = title
-    ScreenGui.ResetOnSpawn = false   -- КРИТИЧЕСКИ ВАЖНО
+    ScreenGui.ResetOnSpawn = false
     ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
-    -- Основная рамка
     local MainFrame = Instance.new("Frame")
-    MainFrame.Name = "MainFrame"
     MainFrame.Size = UDim2.new(0, 650, 0, 450)
     MainFrame.Position = UDim2.new(0.5, -325, 0.5, -225)
     MainFrame.BackgroundColor3 = Colors.Background
@@ -111,9 +87,7 @@ function Library:CreateWindow(title)
     MainFrame.Draggable = true
     MainFrame.Parent = ScreenGui
     makeCorner(MainFrame, 8)
-    applyShadow(MainFrame)
 
-    -- Заголовок с кнопками управления
     local TitleBar = Instance.new("Frame")
     TitleBar.Size = UDim2.new(1, 0, 0, 32)
     TitleBar.BackgroundColor3 = Colors.Element
@@ -131,7 +105,6 @@ function Library:CreateWindow(title)
     TitleText.TextSize = 14
     TitleText.Parent = TitleBar
 
-    -- Кнопка сворачивания
     local MinimizeBtn = Instance.new("TextButton")
     MinimizeBtn.Size = UDim2.new(0, 20, 0, 20)
     MinimizeBtn.Position = UDim2.new(1, -54, 0.5, -10)
@@ -144,11 +117,9 @@ function Library:CreateWindow(title)
     MinimizeBtn.AutoButtonColor = false
     makeCorner(MinimizeBtn, 4)
     MinimizeBtn.Parent = TitleBar
-
     MinimizeBtn.MouseButton1Click:Connect(function()
         MainFrame.Visible = false
         Window.Minimized = true
-        -- Показать маленький значок для восстановления
         local RestoreBtn = ScreenGui:FindFirstChild("RestoreBtn")
         if not RestoreBtn then
             RestoreBtn = Instance.new("TextButton")
@@ -171,7 +142,6 @@ function Library:CreateWindow(title)
         end
     end)
 
-    -- Кнопка закрытия
     local CloseBtn = Instance.new("TextButton")
     CloseBtn.Size = UDim2.new(0, 20, 0, 20)
     CloseBtn.Position = UDim2.new(1, -24, 0.5, -10)
@@ -184,14 +154,11 @@ function Library:CreateWindow(title)
     CloseBtn.AutoButtonColor = false
     makeCorner(CloseBtn, 4)
     CloseBtn.Parent = TitleBar
-
     CloseBtn.MouseButton1Click:Connect(function()
         ScreenGui:Destroy()
     end)
 
-    -- Контейнер для вкладок
     local TabContainer = Instance.new("Frame")
-    TabContainer.Name = "TabContainer"
     TabContainer.Size = UDim2.new(0, 130, 1, -32)
     TabContainer.Position = UDim2.new(0, 0, 0, 32)
     TabContainer.BackgroundColor3 = Colors.Element
@@ -200,7 +167,6 @@ function Library:CreateWindow(title)
     makeCorner(TabContainer, 8)
 
     local ContentFrame = Instance.new("Frame")
-    ContentFrame.Name = "ContentFrame"
     ContentFrame.Size = UDim2.new(1, -130, 1, -32)
     ContentFrame.Position = UDim2.new(0, 130, 0, 32)
     ContentFrame.BackgroundColor3 = Colors.Background
@@ -211,14 +177,12 @@ function Library:CreateWindow(title)
     TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
     TabListLayout.Parent = TabContainer
 
-    -- Переключение видимости по Insert
     UserInputService.InputBegan:Connect(function(input, gameProcessed)
         if input.KeyCode == Enum.KeyCode.Insert and not gameProcessed then
             MainFrame.Visible = not MainFrame.Visible
         end
     end)
 
-    -- Создание вкладки
     function Window:CreateTab(name)
         local Tab = {}
         Tab.Name = name
@@ -249,7 +213,6 @@ function Library:CreateWindow(title)
             for _, elem in ipairs(Tab.Elements) do
                 if elem.Frame then elem.Frame.Visible = true end
             end
-            -- Подсвечиваем активную вкладку
             TabButton.BackgroundColor3 = Colors.Accent
             for _, btn in ipairs(TabContainer:GetChildren()) do
                 if btn:IsA("TextButton") and btn ~= TabButton then
@@ -258,11 +221,8 @@ function Library:CreateWindow(title)
             end
         end)
 
-        -- Элементы интерфейса
-
-        -- Кнопка с анимацией клика
         function Tab:AddButton(text, callback)
-            local elem = {Type = "Button", Text = text, Callback = callback}
+            local elem = {Type = "Button", Text = text}
             local Frame = Instance.new("TextButton")
             Frame.Size = UDim2.new(1, -16, 0, 30)
             Frame.Position = UDim2.new(0, 8, 0, 8 + (#Tab.Elements * 36))
@@ -276,7 +236,6 @@ function Library:CreateWindow(title)
             Frame.AutoButtonColor = false
             makeCorner(Frame, 4)
 
-            -- Анимация нажатия
             Frame.MouseButton1Down:Connect(function()
                 TweenService:Create(Frame, TweenInfo.new(0.1), {BackgroundColor3 = Colors.ButtonHover}):Play()
                 TweenService:Create(Frame, TweenInfo.new(0.05), {Size = UDim2.new(1, -16, 0, 28)}):Play()
@@ -292,7 +251,6 @@ function Library:CreateWindow(title)
             return elem
         end
 
-        -- Тоггл
         function Tab:AddToggle(text, default, callback)
             local elem = {Type = "Toggle", Text = text, Value = default}
             local Frame = Instance.new("Frame")
@@ -353,7 +311,7 @@ function Library:CreateWindow(title)
             return elem
         end
 
-        -- Ползунок (исправлен)
+        -- Исправленный слайдер: поднимаем ZIndex, чтобы ползунок не прятался
         function Tab:AddSlider(text, min, max, default, callback)
             local elem = {Type = "Slider", Text = text, Value = default}
             local Frame = Instance.new("Frame")
@@ -381,6 +339,7 @@ function Library:CreateWindow(title)
             SliderBar.Position = UDim2.new(0, 10, 0, 35)
             SliderBar.BackgroundColor3 = Colors.Disabled
             SliderBar.BorderSizePixel = 0
+            SliderBar.ZIndex = 5   -- повышаем слой
             SliderBar.Parent = Frame
 
             local Fill = Instance.new("Frame")
@@ -388,6 +347,7 @@ function Library:CreateWindow(title)
             Fill.Size = UDim2.new(percent, 0, 1, 0)
             Fill.BackgroundColor3 = Colors.Accent
             Fill.BorderSizePixel = 0
+            Fill.ZIndex = 5
             Fill.Parent = SliderBar
 
             local Thumb = Instance.new("TextButton")
@@ -397,6 +357,7 @@ function Library:CreateWindow(title)
             Thumb.Text = ""
             Thumb.BorderSizePixel = 0
             Thumb.AutoButtonColor = false
+            Thumb.ZIndex = 10  -- самый верх
             makeCorner(Thumb, 6)
             Thumb.Parent = SliderBar
 
@@ -409,7 +370,6 @@ function Library:CreateWindow(title)
                     dragging = false
                 end
             end)
-            -- Более стабильное обновление позиции
             RunService.RenderStepped:Connect(function()
                 if dragging then
                     local mousePos = UserInputService:GetMouseLocation()
@@ -418,7 +378,7 @@ function Library:CreateWindow(title)
                     local relativeX = math.clamp(mousePos.X - barStart, 0, barWidth)
                     local newPercent = relativeX / barWidth
                     local val = min + (max - min) * newPercent
-                    val = math.floor(val * 100 + 0.5) / 100 -- округление до 2 знаков
+                    val = math.floor(val * 100 + 0.5) / 100
                     Fill.Size = UDim2.new(newPercent, 0, 1, 0)
                     Thumb.Position = UDim2.new(newPercent, -6, 0.5, -6)
                     Label.Text = text .. ": " .. tostring(val)
@@ -432,7 +392,7 @@ function Library:CreateWindow(title)
             return elem
         end
 
-        -- Дропдаун
+        -- Исправленный дропдаун: список теперь всегда поверх
         function Tab:AddDropdown(text, options, callback)
             local elem = {Type = "Dropdown", Value = options[1]}
             local Frame = Instance.new("Frame")
@@ -474,6 +434,7 @@ function Library:CreateWindow(title)
             DropList.BorderSizePixel = 0
             DropList.Visible = false
             DropList.ClipsDescendants = true
+            DropList.ZIndex = 10            -- ПОВЕРХ ВСЕГО
             DropList.Parent = Frame
             makeCorner(DropList, 4)
 
@@ -501,6 +462,7 @@ function Library:CreateWindow(title)
                 OptionBtn.Font = Enum.Font.Gotham
                 OptionBtn.TextSize = 14
                 OptionBtn.AutoButtonColor = false
+                OptionBtn.ZIndex = 10
                 OptionBtn.Parent = DropList
                 OptionBtn.MouseButton1Click:Connect(function()
                     elem.Value = option
@@ -518,7 +480,6 @@ function Library:CreateWindow(title)
             return elem
         end
 
-        -- Бинд клавиши
         function Tab:AddKeybind(text, defaultKey, callback)
             local elem = {Type = "Keybind", Text = text, Value = defaultKey}
             local Frame = Instance.new("Frame")
@@ -568,7 +529,6 @@ function Library:CreateWindow(title)
                 end)
             end)
 
-            -- Фактический бинд
             UserInputService.InputBegan:Connect(function(input, gameProcessed)
                 if input.KeyCode == elem.Value and not gameProcessed then
                     callback()
@@ -580,7 +540,6 @@ function Library:CreateWindow(title)
             return elem
         end
 
-        -- Текстовое поле
         function Tab:AddTextbox(text, default, callback)
             local elem = {Type = "Textbox", Value = default}
             local Frame = Instance.new("Frame")
@@ -626,7 +585,6 @@ function Library:CreateWindow(title)
             return elem
         end
 
-        -- Цветовой пикер
         function Tab:AddColorpicker(text, default, callback)
             local elem = {Type = "Colorpicker", Value = default}
             local Frame = Instance.new("Frame")
